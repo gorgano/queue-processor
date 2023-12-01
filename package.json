@@ -1,5 +1,5 @@
 {
-  "name": "tolerant-mailer",
+  "name": "queue-processor",
   "version": "1.0.0",
   "description": "Allow submitting an email request to a common end point that uses multiple services to process the request",
   "main": "index.ts",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gorgano/tolerant-mailer.git"
+    "url": "git+https://github.com/gorgano/queue-processor.git"
   },
   "author": "Jason Hurst",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gorgano/tolerant-mailer/issues"
+    "url": "https://github.com/gorgano/queue-processor/issues"
   },
-  "homepage": "https://github.com/gorgano/tolerant-mailer#readme",
+  "homepage": "https://github.com/gorgano/queue-processor#readme",
   "devDependencies": {
     "@types/chai": "^4.3.9",
     "@types/express": "^4.17.20",
