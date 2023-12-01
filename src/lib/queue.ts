@@ -1,17 +1,23 @@
+import { inherits } from "util";
 import { QueueMessage, QueueRunnerStatus } from "../types";
-import { minuteFromNow, currentTime } from "./utils";
+import { nextInterval, currentTime, timeoutIntervalSeconds } from "./utils";
 
 class Queue {
     private queue: QueueMessage[];
     private queueNumber: number;
     private lastShift: number;
-    private runner: QueueRunner;
+    private nextShift: number;
+    private runner: QueueRunner | undefined;
 
     constructor(queueNumber: number) {
         this.queueNumber = queueNumber;
         this.queue = [];
-        this.lastShift = 0; // Math.floor(Date.now() / 1000);
-        this.runner = new QueueRunner(this);
+        this.lastShift = 0;
+        this.nextShift = 0;
+    }
+
+    init(runner: QueueRunner): void {
+        this.runner = runner;
     }
 
     pushMessage(message: string): void {
@@ -22,15 +28,27 @@ class Queue {
             message,
         };
         this.queue.push(queueMessage);
+
+        if (!this.runner) {
+            console.log('Error::No runner started, please initialize to start the Queue Runner')
+            return;
+        }
+
         this.runner.run();
     }
 
     getMessage(): QueueMessage | undefined {
-        this.lastShift = minuteFromNow();
+        this.nextShift = nextInterval();
+        this.lastShift = currentTime();
         return this.queue.shift();
     }
 
-    getLastShift(): number { return this.lastShift };
+    getQueueCount():number {
+        return this.queue.length;
+    }
+
+    getLastShift(): number { return this.lastShift; }
+    getNextShift(): number { return this.nextShift; }
 
     getQueueNumber(): number { return this.queueNumber };
 };
@@ -40,17 +58,18 @@ class Queue {
 class QueueRunner {
     private status: QueueRunnerStatus;
     private queue: Queue;
-    private secondInterval: number;
+    // private secondInterval: number;
 
-    constructor(queue: Queue, secondInterval: number = 60) {
+    constructor(queue: Queue) {
         this.queue = queue;
         this.status = QueueRunnerStatus.idle;
-        this.secondInterval = secondInterval;
+        // this.secondInterval = secondInterval;
     }
 
     public run(): void {
         if (this.status === QueueRunnerStatus.idle) {
-            this.nextMessage();
+            process.nextTick(() => this.nextMessage());
+            console.log('verbose::Scheduled next message after return...');
             return;
         }
 
@@ -58,7 +77,7 @@ class QueueRunner {
     }
 
     private processMessage(message: QueueMessage): void {
-        console.log(`Message::${currentTime()}::Queue(${message.queueNumber})::Queued Time(${message.createTime})::${message.message}`);
+        console.log(`Message::Current Time(${currentTime()})::Queue(${message.queueNumber})::Queued Time(${message.createTime})::${message.message}`);
     }
 
     /**
@@ -70,7 +89,11 @@ class QueueRunner {
      * When no more messages are available, the queueRunner idles.
      */
     private nextMessage(): void {
-        if (this.queue.getLastShift() > currentTime()) {
+        this.status = QueueRunnerStatus.running;
+
+        console.log('verbose::Polling for nextMessage...');
+
+        if (this.queue.getNextShift() < currentTime()) {
             // Get a message and process it
             // ****
             // If doing anything that might go wrong, would wrap in a try
@@ -102,8 +125,8 @@ class QueueRunner {
     private longPoll(): void {
         // Wait for the next interval
         try {
-            console.log('verbose::Wating for next interval')
-            setTimeout(() => this.nextMessage(), this.secondInterval);
+            console.log(`verbose::Wating for next interval ${timeoutIntervalSeconds} (seconds)...`);
+            setTimeout(() => this.nextMessage(), timeoutIntervalSeconds * 1000);
         } catch (e) {
             console.error(`Unable to set timeout for Queue Runner!  Unknown issue! QueueNumber(${this.queue.getQueueNumber()});  Will try on next message received.`);
         }
@@ -112,7 +135,10 @@ class QueueRunner {
 
 
 export const QueueFactory = (queueNumber: number) => {
-    return new Queue(queueNumber);
+    const queue = new Queue(queueNumber);
+    const runner = new QueueRunner(queue);
+    queue.init(runner);
+    return queue;
 };
 
 

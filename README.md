@@ -6,7 +6,7 @@ multi-queue fifo processor
 Create a REST application that messages and processes them in the order they are recieved.
 * Handle multiple queues based on an environment variable
 * Each queue is rate limited to 1 message per second
-* Should have a GET endpoint called `/receive-message` which accepts a request in the _query string_ `queue` (string) and `message` (string)
+* Should have a GET endpoint called `/receive-message` which accepts a request in the _query string parameters_ `queue` (string) and `message` (string)
     * Response should be 200 on accept
     * No processing before acceptance
     * Processing is prenting to console
