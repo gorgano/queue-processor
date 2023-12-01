@@ -5,8 +5,7 @@ export interface QueueMessage {
     tries: number,
 };
 
-// export interface Queue {
-//     pushMessage: (message: QueueMessage) => void,
-//     getMessage: () => QueueMessage | undefined,
-//     getQueueNumber: () => number,
-// };
+export enum QueueRunnerStatus {
+    running=0,
+    idle,
+};
