@@ -19,7 +19,6 @@ app.get('/status', async (req: Request, res: Response) => {
 app.get('/receive-message', async (req: Request, res: Response) => {
 	const inMessage = req.query.message;
 	const inQueue = req.query.queue;
-	console.log({ message: inMessage, queue: inQueue });
 
 	// Check for needed values
 	if (!inMessage) {

@@ -21,3 +21,28 @@ Create a REST application that messages and processes them in the order they are
 * Assume the _first_ queue message may be processed _immediately_
 * Assume any new message may be processed _immediately_ when no message has been processed in the last minute.
 * Invalid schema request results in a server error
+
+# Would Have Liked To
+* Add more testing
+* Add a proper logger service to be able to turn verbose mode/on off
+* Add to the status route to dump the current queue status
+
+# Running
+```
+npm install
+npm run dev
+```
+In another terminal
+```
+curl "http://localhost:8080/receive-message?message=SomeMessageHere&queue=optional"
+```
+
+# Documentation
+To access the API docs, use:
+http://localhost:8080/api-docs/
+
+# Testing
+Only one test currently, demonstrating that the messages are rate limited.  Run with:
+```
+npm test
+```

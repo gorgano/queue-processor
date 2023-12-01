@@ -24,6 +24,36 @@
           }
         }
       }
+    },
+    "/receive-message": {
+      "get": {
+        "parameters": [
+          {
+            "name": "queue",
+            "in": "query",
+            "description": "name of the queue to insert message",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "message",
+            "in": "query",
+            "description": "message to insert into the queue",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "get status of service",
+        "responses": {
+          "200": {
+            "description": "Message is processing"
+          }
+        }
+      }
     }
   }
 }
