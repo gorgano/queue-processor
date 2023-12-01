@@ -14,6 +14,11 @@ app.get('/status', async (req: Request, res: Response) => {
 	res.status(202).json(({ message: 'UP!' }));
 });
 
+
+app.get('/receive-message', async (req: Request, res: Response) => {
+
+});
+
 // Start server
 app.listen(8080, () => {
 	console.log('Server started on port 8080');

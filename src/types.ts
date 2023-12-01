@@ -1,15 +1,12 @@
-export interface SendMessage {
-    to: string,
-    to_name: string,
-    from: string,
-    from_name: string,
-    subject: string,
-    body: string,
+export interface QueueMessage {
+    message: string,
+    queueNumber: number,
+    createTime: number,
+    tries: number,
 };
 
-
-export enum SendTypes {
-    mailgun = 'mailgun',
-    sendgrid = 'sendgrid',
-};
-
+// export interface Queue {
+//     pushMessage: (message: QueueMessage) => void,
+//     getMessage: () => QueueMessage | undefined,
+//     getQueueNumber: () => number,
+// };
