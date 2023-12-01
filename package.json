@@ -1,7 +1,7 @@
 {
   "name": "queue-processor",
   "version": "1.0.0",
-  "description": "Allow submitting an email request to a common end point that uses multiple services to process the request",
+  "description": "Submit to a rate limited queue service",
   "main": "index.ts",
   "scripts": {
     "dev": "tsc-watch --onSuccess \"npm start\"",
