@@ -31,15 +31,12 @@ describe('QueueRunner', () => {
                     // Examine each send date (seconds)
                     // ensure the delta between any two notes is not LESS than 1
                     const deltas = processTimes.map((current, i, times) => {
-                        let next = currentTime();
-                        console.log(i);
-                        if (i + 1 < times.length) next = times[i + 1];
-                        console.log(next);
-                        const delta = next - current;
+                        if (i === 0) return 1; // first message has nothing to compare
+                        const last = times[i - 1];
+                        const delta = current - last;
                         return delta;
                     });
-                    console.log(deltas);
-                    const numberOverOne = deltas.filter(d => d > 1).length;
+                    const numberOverOne = deltas.filter(d => d >= 1).length;
                     expect(numberOverOne).to.equal(messages.length);
                     done();
                 } catch (e) {
@@ -55,7 +52,7 @@ describe('QueueRunner', () => {
             () => {
                 checkAllProcessed()
             },
-            // Should take 5 seconds, wait
+            // Going to take a few seconds, wait
             10 * 1000);
     }).timeout(30000);
 })
