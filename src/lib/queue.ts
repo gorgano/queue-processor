@@ -1,16 +1,16 @@
 import { inherits } from "util";
-import { QueueMessage, QueueRunnerStatus } from "../types";
+import { QueueMessage, QueueRunnerStatus, IQueue, IQueryRunner } from "../types";
 import { nextInterval, currentTime, timeoutIntervalSeconds } from "./utils";
 
-class Queue {
+class Queue implements IQueue {
     private queue: QueueMessage[];
-    private queueNumber: number;
+    private queueName: string;
     private lastShift: number;
     private nextShift: number;
     private runner: QueueRunner | undefined;
 
-    constructor(queueNumber: number) {
-        this.queueNumber = queueNumber;
+    constructor(queueName: string) {
+        this.queueName = queueName;
         this.queue = [];
         this.lastShift = 0;
         this.nextShift = 0;
@@ -23,7 +23,7 @@ class Queue {
     pushMessage(message: string): void {
         const queueMessage: QueueMessage = {
             createTime: currentTime(),
-            queueNumber: this.queueNumber,
+            queueName: this.queueName,
             tries: 0,
             message,
         };
@@ -43,24 +43,24 @@ class Queue {
         return this.queue.shift();
     }
 
-    getQueueCount():number {
+    getQueueCount(): number {
         return this.queue.length;
     }
 
     getLastShift(): number { return this.lastShift; }
     getNextShift(): number { return this.nextShift; }
 
-    getQueueNumber(): number { return this.queueNumber };
+    getQueueName(): string { return this.queueName };
 };
 
 
 
-class QueueRunner {
+class QueueRunner implements IQueryRunner {
     private status: QueueRunnerStatus;
-    private queue: Queue;
+    private queue: IQueue;
     // private secondInterval: number;
 
-    constructor(queue: Queue) {
+    constructor(queue: IQueue) {
         this.queue = queue;
         this.status = QueueRunnerStatus.idle;
         // this.secondInterval = secondInterval;
@@ -77,7 +77,7 @@ class QueueRunner {
     }
 
     private processMessage(message: QueueMessage): void {
-        console.log(`Message::Current Time(${currentTime()})::Queue(${message.queueNumber})::Queued Time(${message.createTime})::${message.message}`);
+        console.log(`Message::Current Time(${currentTime()})::Queue(${message.queueName})::Queued Time(${message.createTime})::${message.message}`);
     }
 
     /**
@@ -128,14 +128,14 @@ class QueueRunner {
             console.log(`verbose::Wating for next interval ${timeoutIntervalSeconds} (seconds)...`);
             setTimeout(() => this.nextMessage(), timeoutIntervalSeconds * 1000);
         } catch (e) {
-            console.error(`Unable to set timeout for Queue Runner!  Unknown issue! QueueNumber(${this.queue.getQueueNumber()});  Will try on next message received.`);
+            console.error(`Unable to set timeout for Queue Runner!  Unknown issue! QueueName(${this.queue.getQueueName()});  Will try on next message received.`);
         }
     }
 }
 
 
-export const QueueFactory = (queueNumber: number) => {
-    const queue = new Queue(queueNumber);
+export const QueueFactory = (queueName: string) => {
+    const queue = new Queue(queueName);
     const runner = new QueueRunner(queue);
     queue.init(runner);
     return queue;
