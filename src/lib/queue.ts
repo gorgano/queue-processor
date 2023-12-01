@@ -2,7 +2,7 @@ import { inherits } from "util";
 import { QueueMessage, QueueRunnerStatus, IQueue, IQueryRunner } from "../types";
 import { nextInterval, currentTime, timeoutIntervalSeconds } from "./utils";
 
-class Queue implements IQueue {
+export class Queue implements IQueue {
     private queue: QueueMessage[];
     private queueName: string;
     private lastShift: number;
@@ -55,19 +55,20 @@ class Queue implements IQueue {
 
 
 
-class QueueRunner implements IQueryRunner {
+export class QueueRunner implements IQueryRunner {
     private status: QueueRunnerStatus;
     private queue: IQueue;
-    // private secondInterval: number;
+    private injectedProcessor?: (message: QueueMessage) => void;
 
-    constructor(queue: IQueue) {
+    constructor(queue: IQueue, processor?: (message: QueueMessage) => void) {
         this.queue = queue;
         this.status = QueueRunnerStatus.idle;
-        // this.secondInterval = secondInterval;
+        this.injectedProcessor = processor;
     }
 
     public run(): void {
         if (this.status === QueueRunnerStatus.idle) {
+            this.status = QueueRunnerStatus.running;
             process.nextTick(() => this.nextMessage());
             console.log('verbose::Scheduled next message after return...');
             return;
@@ -76,7 +77,11 @@ class QueueRunner implements IQueryRunner {
         console.log('verbose::New Run call, but QueueRunner already active, waiting for longPoll for next processor');
     }
 
-    private processMessage(message: QueueMessage): void {
+    protected processMessage(message: QueueMessage): void {
+        if (this.injectedProcessor) {
+            this.injectedProcessor(message);
+            return;
+        }
         console.log(`Message::Current Time(${currentTime()})::Queue(${message.queueName})::Queued Time(${message.createTime})::${message.message}`);
     }
 
@@ -89,8 +94,6 @@ class QueueRunner implements IQueryRunner {
      * When no more messages are available, the queueRunner idles.
      */
     private nextMessage(): void {
-        this.status = QueueRunnerStatus.running;
-
         console.log('verbose::Polling for nextMessage...');
 
         if (this.queue.getNextShift() < currentTime()) {
@@ -109,7 +112,7 @@ class QueueRunner implements IQueryRunner {
 
             if (!nextMessage) {
                 // Nothing to process, wait for next run request
-                // Got to idle mode
+                // Go to idle mode
                 this.status = QueueRunnerStatus.idle;
                 console.log('verbose::No messages to process, idling');
                 return;
@@ -125,8 +128,8 @@ class QueueRunner implements IQueryRunner {
     private longPoll(): void {
         // Wait for the next interval
         try {
-            console.log(`verbose::Wating for next interval ${timeoutIntervalSeconds} (seconds)...`);
-            setTimeout(() => this.nextMessage(), timeoutIntervalSeconds * 1000);
+            console.log(`verbose::Wating for next interval ${timeoutIntervalSeconds / 2} (seconds)...`);
+            setTimeout(() => this.nextMessage(), (timeoutIntervalSeconds / 2) * 1000);
         } catch (e) {
             console.error(`Unable to set timeout for Queue Runner!  Unknown issue! QueueName(${this.queue.getQueueName()});  Will try on next message received.`);
         }
@@ -134,9 +137,12 @@ class QueueRunner implements IQueryRunner {
 }
 
 
-export const QueueFactory = (queueName: string) => {
+export const QueueFactory = (
+    queueName: string,
+    injectedProcessor?: (message: QueueMessage) => void,
+) => {
     const queue = new Queue(queueName);
-    const runner = new QueueRunner(queue);
+    const runner = new QueueRunner(queue, injectedProcessor);
     queue.init(runner);
     return queue;
 };
